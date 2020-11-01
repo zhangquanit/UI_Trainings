@@ -1,0 +1,151 @@
+--------------------WebView常见漏洞
+http://blog.csdn.net/self_study/article/details/55046348
+
+1、addJavaInterface
+Java 对象继承关系会导致很多 Public 的函数及 getClass 函数都可以在JS中被访问，结合 Java 的反射机制，
+攻击者还可以获得系统类的函数，进而可以进行任意代码执行，
+首先第一步 WebView 添加 Javascript 对象，并且添加一些权限，比如想要获取 SD 卡上面的信息就需要 android.permission.WRITE_EXTERNAL_STORAGE ；
+第二步 JS 中可以遍历 window 对象，找到存在 getClass 方法的对象，再通过反射的机制，得到 Runtime 对象，然后就可以调用静态方法来执行一些命令，比如访问文件的命令；
+第三步就是从执行命令后返回的输入流中得到字符串，比如执行完访问文件的命令之后，就可以得到文件名的信息了，有很严重暴露隐私的危险
+function execute(cmdArgs)
+{
+    for (var obj in window) {
+        if ("getClass" in window[obj]) {
+            alert(obj);
+            return  window[obj].getClass().forName("java.lang.Runtime")
+                 .getMethod("getRuntime",null).invoke(null,null).exec(cmdArgs);
+        }
+    }
+}
+API17 以上要求必须在方法上使用@JavascriptInterface注解，从而避免这个问题的发生
+
+2、searchBoxJavaBridge_
+在 Android4.4 以下的系统中，webkit 中默认内置了 “searchBoxJavaBridge_”
+该接口同样存在远程代码执行的威胁，所以就算没有通过 addJavascriptInterface 加入任何的对象，
+系统也会加入一个 searchBoxJavaBridge_ 对象，解决办法就是通过 removeJavascriptInterface 方法将对象删除。
+webView.removeJavascriptInterface("searchBoxJavaBridge_");
+
+3、accessibility&accessibilityTraversal
+当系统辅助功能服务被开启时，在 Android4.4 以下的系统中，由系统提供的 WebView 组件都默认导出 ”accessibility” 和 ”accessibilityTraversal” 这两个接口
+这两个接口同样存在远程任意代码执行的威胁，同样的需要通过 removeJavascriptInterface 方法将这两个对象删除。
+
+4、WebView 密码明文存储漏洞
+WebView 默认开启密码保存功能 mWebView.setSavePassword(true)，如果该功能未关闭，在用户输入密码时，会弹出提示框，
+询问用户是否保存密码，如果选择”是”，密码会被明文保到 /data/data/com.package.name/databases/webview.db 中，
+这样就有被盗取密码的危险，所以需要通过 WebSettings.setSavePassword(false) 关闭密码保存提醒功能。
+
+
+
+一、常用配置
+
+---------------------Java与Js交互
+一、js调用Java
+1、addJavascriptInterface
+API17之后必须在方法上添加@JavascriptInterface
+
+function toastMessage(message) {
+  window.nativeApp.toastMessage(message)
+}
+function sumToJava(number1, number2){
+   window.nativeApp.onSumResult(number1 + number2)
+}
+缺点：在 4.2 系统以下存在漏洞问题
+
+2、利用 WebViewClient 接口回调方法拦截 url
+shouldOverrideUrlLoading (WebView view, String url)
+利用这个拦截 url，然后解析这个 url 的协议，如果发现是我们预先约定好的协议就开始解析参数，执行相应的逻辑
+
+优点：不存在安全漏洞问题，使用也比较方便
+缺点：需要约定协议，不能给js发送返回值
+
+3、利用 WebChromeClient 回调接口的三个方法拦截消息
+onJsAlert 方法是弹出警告框，一般情况下在 Android 中为 Toast，在文本里面加入\n就可以换行；
+onJsConfirm 弹出确认框，会返回布尔值，通过这个值可以判断点击时确认还是取消，true表示点击了确认，false表示点击了取消；
+onJsPrompt 弹出输入框，点击确认返回输入框中的值，点击取消返回 null。
+
+1）如果无返回值，则上面3个方法都可以
+2）如果需要返回值，则建议使用onJsPrompt，因为 onJsAlert 是不能返回值的，而 onJsConfirm 只能够返回确定或者取消两个值
+onJsPrompt 方法是可以返回字符串类型的值。
+
+function clickprompt(){
+    var result=prompt("js://openActivity?arg1=111&arg2=222"); //返回值
+    alert("open activity " + result);
+}
+特点：根据约定协议拦截url，可以有返回值。
+
+二、Java调用JS
+webView调用js的基本格式为webView.loadUrl(“javascript:methodName(parameterValues)”)
+1）调用js无参无返回值函数
+String call = "javascript:sayHello()";
+webView.loadUrl(call);
+2）调用js有参无返回值函数
+String call = "javascript:alertMessage(\"" + "content" + "\")";
+webView.loadUrl(call);
+3）调用js有参数有返回值的函数
+Android在4.4之前并没有提供直接调用js函数并获取值的方法，所以在此之前，常用的思路是 java调用js方法，js方法执行完毕，再次调用java代码将值返回。
+即java->js->java
+String call = "javascript:sumToJava(1,2)";
+webView.loadUrl(call);
+
+function sumToJava(number1, number2){
+  window.nativeApp.onSumResult(number1 + number2)
+}
+
+@JavascriptInterface
+public void onSumResult(int result) {
+  Log.i(LOGTAG, "onSumResult result=" + result);
+}
+
+Android 4.4之后使用evaluateJavascript即可
+function getGreetings() {
+      return 1;
+}
+java代码时用evaluateJavascript方法调用
+private void testEvaluateJavascript(WebView webView) {
+  webView.evaluateJavascript("getGreetings()", new ValueCallback<String>() {
+  @Override
+  public void onReceiveValue(String value) {
+      Log.i(LOGTAG, "onReceiveValue value=" + value);
+  }});
+}
+注意：
+上面限定了结果返回结果为String，对于简单的类型会尝试转换成字符串返回，对于复杂的数据类型，建议以字符串形式的json返回。
+evaluateJavascript方法必须在UI线程（主线程）调用，因此onReceiveValue也执行在主线程。
+
+三、常见问题
+1、无法弹框
+应该是没有设置WebChromeClient,按照以下代码设置
+myWebView.setWebChromeClient(new WebChromeClient());
+2、Uncaught ReferenceError: functionName is not defined
+问题出现原因，网页的js代码没有加载完成，就调用了js方法。解决方法是在网页加载完成之后调用js方法
+myWebView.setWebViewClient(new WebViewClient() {
+  @Override
+  public void onPageFinished(WebView view, String url) {
+      super.onPageFinished(view, url);
+      //在这里执行你想调用的js函数
+  }
+});
+3、Uncaught TypeError: Object [object Object] has no method
+安全限制问题
+将targetSdkVersion设置成17或更高，引入@JavascriptInterface注释
+@JavascriptInterface
+public void method(){
+
+}
+4、本地文件乱码
+ public void loadData(String data, String mimeType, String encoding)
+
+出现乱码
+String html = new String("<h3>我是loadData() 的标题</h3><p>&nbsp&nbsp我是他的内容</p>");
+webView.loadData(html, "text/html", "UTF-8");
+
+正常显示，在mimeType后面拼接charset=UTF-8
+String html = new String("<h3>我是loadData() 的标题</h3><p>&nbsp&nbsp我是他的内容</p>");
+webView.loadData(html, "text/html;charset=UTF-8", "null");
+
+5、页面空白
+当 WebView 嵌套在 ScrollView 里面的时候，如果 WebView 先加载了一个高度很高的网页，然后加载了一个高度很低的网页，就会造成 WebView 的高度无法自适应，底部出现大量空白的情况出现
+
+6、内存泄漏
+QQ 和微信的做法，每当打开一个 WebView 界面的时候，会开启一个新进程，在页面退出之后通过 System.exit(0) 关闭这个进程
+目前我是在onDestory中调用webView.onDestory销毁页面.

@@ -1,0 +1,227 @@
+
+android.support.design.widget
+
+参照：http://blog.csdn.net/hahashui123/article/details/46907607
+Android的材料设计兼容库，主要包含了 8 个新的 material design 组件！最低支持 Android 2.1 。
+
+1、AppBarLayout
+<android.support.design.widget.AppBarLayout
+       android:layout_height="wrap_content"
+       android:layout_width="match_parent">
+
+   <android.support.v7.widget.Toolbar
+           ...
+           app:layout_scrollFlags="scroll|enterAlways"/>
+
+   <android.support.design.widget.TabLayout
+           ...
+           app:layout_scrollFlags="scroll|enterAlways"/>
+
+</android.support.design.widget.AppBarLayout>
+
+参考：http://blog.csdn.net/huachao1001/article/details/51558835
+AppBarLayout继承自LinearLayout，布局方向为垂直方向。
+所以你可以把它当成垂直布局的LinearLayout来使用。
+AppBarLayout是在LinearLayou上加了一些材料设计的概念，它可以让你定制当某个可滚动View的滚动手势发生变化时，其内部的子View实现何种动作。
+内部的子View通过在布局中加app:layout_scrollFlags设置执行的动作
+app:layout_scrollFlags可以设置哪些动作呢？
+1）scroll:值设为scroll的View会跟随滚动事件一起发生移动。
+就是当指定的ScrollView发生滚动时，该View也跟随一起滚动，就好像这个View也是属于这个ScrollView一样。
+2）enterAlways:值设为enterAlways的View,当ScrollView往下滚动时，该View会直接往下滚动。而不用考虑ScrollView是否在滚动。
+3）exitUntilCollapsed：值设为exitUntilCollapsed的View，当这个View要往上逐渐“消逝”时，会一直往上滑动，直到剩下的的高度达到它的最小高度后，再响应ScrollView的内部滑动事件。
+简单解释：在ScrollView往上滑动时，首先是View把滑动事件“夺走”，由View去执行滑动，直到滑动最小高度后，把这个滑动事件“还”回去，让ScrollView内部去上滑。
+4）enterAlwaysCollapsed：是enterAlways的附加选项，一般跟enterAlways一起使用，它是指，View在往下“出现”的时候，首先是enterAlways效果，当View的高度达到最小高度时，View就暂时不去往下滚动，直到ScrollView滑动到顶部不再滑动时，View再继续往下滑动，直到滑到View的顶部结束。
+
+
+2、BottomNavigationView
+ <android.support.design.widget.BottomNavigationView
+       xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:design="http://schema.android.com/apk/res/android.support.design"
+       android:id="@+id/navigation"
+       android:layout_width="match_parent"
+       android:layout_height="56dp"
+       android:layout_gravity="start"
+       design:menu="@menu/my_navigation_items" />
+
+3、BottomSheetDialog、BottomSheetDialogFragment
+从底部弹出来的浮层
+
+4、CircularBorderDrawable
+
+5、CollapsingToolbarLayout
+提供了一个可以折叠的Toolbar，它继承至FrameLayout，给它设置layout_scrollFlags，它可以控制包含在CollapsingToolbarLayout中的控件(如：ImageView、Toolbar)在响应layout_behavior事件时作出相应的scrollFlags滚动事件(移除屏幕或固定在屏幕顶端)。
+
+
+6、CoordinatorLayout
+http://blog.csdn.net/huachao1001/article/details/51554608
+CoordinatorLayout是帮我们协调子View的，它根据我们的定制，帮助我们协调各个子View的布局。
+比如：我们有一个蓝色的View，一个黄色的View，在移动蓝色的View时，黄色的View会跟着移动
+CoordinatorLayout的使用核心是Behavior，Behavior就是执行你定制的动作。
+在讲Behavior之前必须先理解两个概念：Child和Dependency
+Child：指要执行动作的CoordinatorLayout的子View，比如上面黄色的View
+Dependency：是指Child依赖的View，比如上面蓝色的View
+简而言之，就是如过Dependency这个View发生了变化，那么Child这个View就要相应发生变化。至于怎么变化，取决于Behavior这个类
+
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.hc.studyCoordinatorLayout.MainActivity">
+
+    <Button
+        app:layout_behavior="com.hc.studyCoordinatorLayout.MyBehavior" />
+
+    <com.hc.studyCoordinatorLayout.TempView
+       />
+</android.support.design.widget.CoordinatorLayout>
+
+//实现我们的Behavior
+public class MyBehavior extends CoordinatorLayout.Behavior<Button> {
+    private int width;
+
+    public MyBehavior(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        DisplayMetrics display = context.getResources().getDisplayMetrics();
+        width = display.widthPixels;
+    }
+
+    /**
+    * 判断child的布局是否依赖dependency
+      返回false表示child不依赖dependency，ture表示依赖
+    */
+    @Override
+    public boolean layoutDependsOn(CoordinatorLayout parent, Button child, View dependency) {
+        //如果dependency是TempView的实例，说明它就是我们所需要的Dependency
+        return dependency instanceof TempView;
+    }
+
+    /**
+    * 当dependency发生改变时（位置、宽高等），执行这个函数
+    * 返回true表示child的位置或者是宽高要发生改变，否则就返回false
+    */
+    @Override
+    public boolean onDependentViewChanged(CoordinatorLayout parent, Button btn, View dependency) {
+
+        //根据dependency的位置，设置Button的位置
+        int top = dependency.getTop();
+        int left = dependency.getLeft();
+
+        int x = width - left - btn.getWidth();
+        int y = top;
+
+        setPosition(btn, x, y);
+        return true;
+    }
+    private void setPosition(View v, int x, int y) {
+        CoordinatorLayout.MarginLayoutParams layoutParams = (CoordinatorLayout.MarginLayoutParams) v.getLayoutParams();
+        layoutParams.leftMargin = x;
+        layoutParams.topMargin = y;
+        v.setLayoutParams(layoutParams);
+    }
+}
+
+7、FloatingActionButton
+悬浮按钮
+FloatingActionButton_backgroundTint        ----setBackgroundTintList(@Nullable ColorStateList tint)
+FloatingActionButton_backgroundTintMode   -----setBackgroundTintMode(@Nullable PorterDuff.Mode tintMode)
+FloatingActionButton_rippleColor           ---- setRippleColor(@ColorInt int color)
+FloatingActionButton_fabSize               -----setSize(@Size int size)
+FloatingActionButton_borderWidth
+FloatingActionButton_elevation
+FloatingActionButton_pressedTranslationZ
+FloatingActionButton_useCompatPadding      ----setUseCompatPadding(boolean useCompatPadding)
+
+setSize(size); // 有三种:SIZE_MINI,SIZE_NORMAL,SIZE_AUTO(按照screen size自动调整),默认是SIZE_AUTO
+setImageDrawable(drawable); //设置icon，它继承于ImageView
+setBackgroundTintList(ColorStateList) 修改背景色，默认使用当前theme的colorAccent，
+button.setRippleColor(Color.GRAY);//设置按下去的波纹颜色
+
+8、NavigationView
+配合DrawerLayout使用，侧滑菜单，主要用来写menu的
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:app="http://schemas.android.com/apk/res-auto"
+       android:id="@+id/drawer_layout"
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:fitsSystemWindows="true">
+
+       <!-- Your contents -->
+
+       <android.support.design.widget.NavigationView
+           android:id="@+id/navigation"
+           android:layout_width="wrap_content"
+           android:layout_height="match_parent"
+           android:layout_gravity="start"
+           app:headerLayout="@layout/header"
+           app:menu="@menu/my_navigation_items" />
+   </android.support.v4.widget.DrawerLayout>
+
+9、Snackbar
+和 Toast 类似。但是它有简单的可选择的单个的Action。 同时还有个特性就是用户可以在它消失时间未到的时候，移掉它！
+button.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        Snackbar
+                .make(content, "你好啊", Snackbar.LENGTH_LONG)
+                .setAction("delete", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(MainActivity.this, "delete", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+    }
+});
+
+10、TabLayout
+<android.support.design.widget.TabLayout
+       android:layout_height="wrap_content"
+       android:layout_width="match_parent">
+
+   <android.support.design.widget.TabItem
+           android:text="@string/tab_text"/>
+
+   <android.support.design.widget.TabItem
+           android:icon="@drawable/ic_android"/>
+
+</android.support.design.widget.TabLayout>
+
+选项卡
+TabLayout+ViewPager
+<android.support.design.widget.TabLayout
+    android:id="@+id/tablayout"
+    android:layout_width="match_parent"
+    android:background="#1FBCD2"
+    android:layout_height="48dp" />
+
+<android.support.v4.view.ViewPager
+    android:id="@+id/vp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+
+//用来设置tab的，同时也要覆写  PagerAdapter 的 CharSequence getPageTitle(int position) 方法，要不然 Tab 没有 title
+tabLayout.setupWithViewPager(viewpager);
+//关联 TabLayout viewpager
+tabLayout.setTabsFromPagerAdapter(adapter);
+
+11、TextInputLayout
+<android.support.design.widget.TextInputLayout
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content">
+
+       <android.support.design.widget.TextInputEditText
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:hint="@string/form_username"/>
+
+</android.support.design.widget.TextInputLayout>
+以前当我们使用 EditText 这个组件的 hint 属性的时候，当用户输入第一个字母之后，这个 hint 中的文本就会消失！有点影响用户体验！
+但是现在不一样了！现在只要把 EditText 包含在 TextInputLayout 中，这个 hint 中的文本就会变成 floating lable 浮动在 EditText 上方！
+同时，也支持在 EditText 下方显示错误信息
+
+getEditText() 得到控件中包含的 EditText 控件
+setError(CharSequence error) 设置错误信息并显示在 EditText 下方 应用场景：比如用户输错了密码或者用户名等
+setHint(CharSequence hint) 设置提示信息
+setErrorEnabled(boolean enabled) 设置 setError(CharSequence error) 这个函数是否可用 记住哦：这个函数一定要在 setError(CharSequence error)
+setPasswordVisibilityXX();设置密码框属性

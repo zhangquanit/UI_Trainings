@@ -1,0 +1,63 @@
+一 UI
+1、awesome-android-ui
+里面网罗了各种 UI 效果，涉及 Material、Layout、Button、List、ViewPager、Dialog、Menu、Parallax、Progress 等等，而且有相对应的截图、gif 展示，以后应对设计师各种效果的时候有很大的参考帮助作用。
+https://github.com/wasabeef/awesome-android-ui
+
+二、动画
+1、Keyframes
+https://github.com/facebookincubator/Keyframes
+跨平台的
+2、lottie-android
+可以直接根据 AE 上的动画文件导出 json 文件，这个 json 文件描述了该动画的一些关键点的坐标以及运动轨迹。
+https://github.com/airbnb/lottie-android
+
+三、android.support.design.widget
+Android的材料设计兼容库，主要包含了 8 个新的 material design 组件！最低支持 Android 2.1 。
+
+四、Support V7  widget组件
+public class Toolbar extends ViewGroup
+
+Toobar主要是用来替换ActionBar的，换句话说，ActionBar能做的，Toolbar都能做。
+当然用Toolbar的时候就得先去把ActionBar给隐藏掉啦~
+隐藏ActionBar的方法有很多，可以通过代码的方式隐藏，也可以通过配置文件的方式，我们主要是通过配置文件的方式来隐藏。
+1)在styles.xml文件中的AppTheme标签中加入如下两行：
+<item name="windowActionBar">false</item>
+<item name="windowNoTitle">true</item>
+2）也可以直接设置Theme
+Theme.AppCompat.Light.NoActionBar
+
+将Toobar作为“ActionBar”来用
+Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+    toolbar.setTitle("这里是Title");
+    toolbar.setSubtitle("这里是子标题");
+    toolbar.setLogo(R.drawable.icon);
+    setSupportActionBar(toolbar); //
+
+    getSupportActionBar()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

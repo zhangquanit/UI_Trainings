@@ -1,0 +1,55 @@
+ViewDragHelper
+ItemTouchHelper+RecycleView
+NestedScrolling
+GestureDetector
+
+一、NestedScroolling
+嵌套滑动
+
+http://blog.csdn.net/lmj623565791/article/details/52204039
+http://blog.csdn.net/al4fun/article/details/53888990
+
+NestedScrolling机制能够让父view和子view在滚动时进行配合，其基本流程如下：
+当子view开始滚动之前，可以通知父view，让其先于自己进行滚动;
+子view自己进行滚动
+子view滚动之后，还可以通知父view继续滚动
+要实现这样的交互，父View需要实现NestedScrollingParent接口，而子View需要实现NestedScrollingChild接口。
+在这套交互机制中，child是动作的发起者，parent只是接受回调并作出响应。
+另外：父view和子view并不需要是直接的父子关系，即如果“parent1包含parent2，parent2包含child”，则parent1和child仍能通过nestedScrolling机制进行交互。
+
+要使用NestedScrolling机制，父View需要实现NestedScrollingParent接口，而子View需要实现NestedScrollingChild接口。
+NestedScrollingChildHelper和NestedScrollingParentHelper是两个帮助类
+
+一些较新的系统view都已经实现了NestedScrollingChild或NestedScrollingParent接口，也就是说他们直接支持NestedScrolling，例如：
+NestedScrollView 已实现 NestedScrollingParent和NestedScrollingChild
+RecyclerView 已实现 NestedScrollingChild
+CoordinatorLayout 已实现 NestedScrollingParent
+
+
+NestedScrollingChild接口
+//开始、停止嵌套滚动
+public boolean startNestedScroll(int axes);
+public void stopNestedScroll();
+
+//触摸滚动相关
+public boolean dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow);
+public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow);
+
+//惯性滚动相关
+public boolean dispatchNestedPreFling(float velocityX, float velocityY);
+public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,8 @@
+
+
+http://blog.csdn.net/lmj623565791/article/details/52204039
+
+父容器
+public class StickyNavLayout extends LinearLayout implements NestedScrollingParent
+子View
+public class RecyclerView extends ViewGroup implements ScrollingView, NestedScrollingChild

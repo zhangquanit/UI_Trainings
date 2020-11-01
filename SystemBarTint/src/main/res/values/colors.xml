@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="actionbar_bg">#FF0099CC</color>
+    <color name="statusbar_bg">#FF006080</color>
+
+    <color name="transparent">#00000000</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gray">#c3c4c6</color>
+    <color name="green">#009447</color>
+    <color name="grays">#8d8d8d</color>
+    <color name="red">#E1423C</color>
+
+    <color name="primary">#FF03A9F4</color>
+    <color name="primary_dark">#FF0288D1</color>
+
+    <color name="def_status_bar">#7f000000</color>
+
+</resources>

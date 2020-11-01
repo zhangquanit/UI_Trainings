@@ -1,0 +1,34 @@
+一、为什么叫做RecycleView
+不关心Item是否显示在正确的位置，如何显示    --LayoutManager
+不关心Item间如何分隔。    --Item Decoration
+不关注Item增加与删除的动画效果  --ItemAnimator
+仅仅关注如何回收与复用View。
+
+二、RecyclerView相关的重要类
+Adapter
+ViewHolder
+LayoutManager
+ItemDecoration
+ItemAnimator
+三、RecyclerView能干什么？
+1、Just like ListView
+2、Just like GridView
+3、横向 ListView
+4、横向 GridView
+5、瀑布流
+6、定制Item增加与删除动画
+
+注意：
+1、没有提供OnItemClickListener ，需要自己实现
+2、使用hoder.getLayoutPosition()获取position
+3、添加item，使用notifyItemInserted(pos)刷新UI
+删除item，使用notifyItemRemoved(pos)刷新UI
+
+
+
+
+------------------------开源库----------------------------------
+DividerItemDecoration:
+	https://gist.github.com/alexfu/0f464fc3742f134ccd1e
+ItemAnimator:
+    https://github.com/gabrielemariotti/RecyclerViewItemAnimators
